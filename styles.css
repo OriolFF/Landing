@@ -1,0 +1,227 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: #000;
+    overflow: hidden;
+    color: #fff;
+}
+
+#gameContainer {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(to bottom, #000428, #004e92);
+}
+
+#parallax-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.parallax-layer {
+    position: absolute;
+    width: 120%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    will-change: transform;
+}
+
+.parallax-layer:nth-child(1) {
+    background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+}
+
+.parallax-layer:nth-child(2) {
+    background-image: 
+        radial-gradient(2px 2px at 20% 30%, white, transparent),
+        radial-gradient(2px 2px at 60% 70%, white, transparent),
+        radial-gradient(1px 1px at 50% 50%, white, transparent),
+        radial-gradient(1px 1px at 80% 10%, white, transparent);
+    background-size: 300px 300px, 200px 200px, 100px 100px, 150px 150px;
+    opacity: 0.5;
+}
+
+.parallax-layer:nth-child(3) {
+    background-image: 
+        radial-gradient(1px 1px at 30% 40%, white, transparent),
+        radial-gradient(1px 1px at 70% 60%, white, transparent),
+        radial-gradient(2px 2px at 10% 80%, white, transparent);
+    background-size: 250px 250px, 180px 180px, 120px 120px;
+    opacity: 0.3;
+}
+
+#gameCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    background: transparent;
+}
+
+#hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #00ff00;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+.hud-element {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.hud-label {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+.hud-element span:last-child {
+    color: #fff;
+    text-align: right;
+}
+
+.hud-separator {
+    height: 1px;
+    background: #00ff00;
+    margin: 8px 0;
+    opacity: 0.5;
+}
+
+.hud-good {
+    color: #00ff00 !important;
+}
+
+.hud-bad {
+    color: #ff0000 !important;
+}
+
+#instructions {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px solid #00ff00;
+    max-width: 300px;
+}
+
+#instructions h2 {
+    color: #00ff00;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.controls, .objectives {
+    margin-bottom: 15px;
+}
+
+.controls p, .objectives p {
+    margin-bottom: 5px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+#gameOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    transition: opacity 0.3s ease;
+}
+
+#gameOverlay.hidden {
+    display: none;
+}
+
+#gameMessage {
+    font-size: 32px;
+    font-weight: bold;
+    color: #00ff00;
+    text-align: center;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 255, 0, 0.5);
+}
+
+#gameMessage.danger {
+    color: #ff0000;
+    text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.5);
+}
+
+#restartBtn {
+    padding: 15px 30px;
+    font-size: 18px;
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(45deg, #00ff00, #00cc00);
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+#restartBtn:hover {
+    background: linear-gradient(45deg, #00cc00, #009900);
+    transform: scale(1.05);
+}
+
+#restartBtn:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    #hud {
+        top: 10px;
+        left: 10px;
+        font-size: 12px;
+        padding: 10px;
+        min-width: 150px;
+    }
+    
+    #instructions {
+        display: none;
+    }
+    
+    #gameMessage {
+        font-size: 24px;
+    }
+}
+
+.animated {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}

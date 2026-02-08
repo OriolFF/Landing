@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Lander - Physics-Based Landing Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="parallax-background">
+            <div class="parallax-layer" data-speed="0.1"></div>
+            <div class="parallax-layer" data-speed="0.3"></div>
+            <div class="parallax-layer" data-speed="0.6"></div>
+        </div>
+        
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="hud">
+            <div class="hud-element">
+                <span class="hud-label">Fuel:</span>
+                <span id="fuel">100%</span>
+            </div>
+            <div class="hud-element">
+                <span class="hud-label">Velocity:</span>
+                <span id="velocity">0.0 m/s</span>
+            </div>
+            <div class="hud-element">
+                <span class="hud-label">Altitude:</span>
+                <span id="altitude">1000m</span>
+            </div>
+            <div class="hud-element">
+                <span class="hud-label">Score:</span>
+                <span id="score">0</span>
+            </div>
+            <div class="hud-element">
+                <span class="hud-label">Level:</span>
+                <span id="level">1</span>
+            </div>
+            <div class="hud-element">
+                <span class="hud-label">Location:</span>
+                <span id="environment">Moon</span>
+            </div>
+            <div class="hud-separator"></div>
+            <div class="hud-element">
+                <span class="hud-label">Vert Speed:</span>
+                <span id="verticalSpeed" class="hud-good">0.0 m/s</span>
+            </div>
+            <div class="hud-element">
+                <span class="hud-label">Horiz Speed:</span>
+                <span id="horizontalSpeed" class="hud-good">0.0 m/s</span>
+            </div>
+            <div class="hud-element">
+                <span class="hud-label">Inclination:</span>
+                <span id="inclination" class="hud-good">0.0°</span>
+            </div>
+        </div>
+        
+        <div id="instructions">
+            <h2>Lunar Lander</h2>
+            <div class="controls">
+                <p><strong>Controls:</strong></p>
+                <p>↑ - Main Thruster</p>
+                <p>← → - Lateral Thrusters</p>
+                <p>Space - Pause/Resume</p>
+            </div>
+            <div class="objectives">
+                <p><strong>Objective:</strong></p>
+                <p>Land safely on the landing pads!</p>
+                <p>Keep your velocity low and land flat.</p>
+            </div>
+        </div>
+        
+        <div id="gameOverlay" class="hidden">
+            <div id="gameMessage"></div>
+            <button id="restartBtn">Restart</button>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
