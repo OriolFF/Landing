@@ -3,81 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lunar Lander - Physics-Based Landing Game</title>
+    <title>Lunar Lander - Scrollable World</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="gameContainer">
-        <div id="parallax-background">
-            <div class="parallax-layer" data-speed="0.1"></div>
-            <div class="parallax-layer" data-speed="0.3"></div>
-            <div class="parallax-layer" data-speed="0.6"></div>
-        </div>
-        
-        <canvas id="gameCanvas"></canvas>
-        
-        <div id="hud">
-            <div class="hud-element">
-                <span class="hud-label">Fuel:</span>
+    <!-- Game Canvas -->
+    <canvas id="game-canvas"></canvas>
+    
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+        <div id="hud-left">
+            <div class="hud-item">
+                <span class="label">Fuel:</span>
+                <div class="bar-container">
+                    <div id="fuel-bar" class="bar"></div>
+                </div>
                 <span id="fuel">100%</span>
             </div>
-            <div class="hud-element">
-                <span class="hud-label">Velocity:</span>
-                <span id="velocity">0.0 m/s</span>
+            <div class="hud-item">
+                <span class="label">Velocity:</span>
+                <span id="velocity">0.0</span> m/s
             </div>
-            <div class="hud-element">
-                <span class="hud-label">Altitude:</span>
-                <span id="altitude">1000m</span>
-            </div>
-            <div class="hud-element">
-                <span class="hud-label">Score:</span>
-                <span id="score">0</span>
-            </div>
-            <div class="hud-element">
-                <span class="hud-label">Level:</span>
-                <span id="level">1</span>
-            </div>
-            <div class="hud-element">
-                <span class="hud-label">Location:</span>
-                <span id="environment">Moon</span>
-            </div>
-            <div class="hud-separator"></div>
-            <div class="hud-element">
-                <span class="hud-label">Vert Speed:</span>
-                <span id="verticalSpeed" class="hud-good">0.0 m/s</span>
-            </div>
-            <div class="hud-element">
-                <span class="hud-label">Horiz Speed:</span>
-                <span id="horizontalSpeed" class="hud-good">0.0 m/s</span>
-            </div>
-            <div class="hud-element">
-                <span class="hud-label">Inclination:</span>
-                <span id="inclination" class="hud-good">0.0°</span>
+            <div class="hud-item">
+                <span class="label">Altitude:</span>
+                <span id="altitude">0</span> m
             </div>
         </div>
         
-        <div id="instructions">
-            <h2>Lunar Lander</h2>
-            <div class="controls">
-                <p><strong>Controls:</strong></p>
-                <p>↑ - Main Thruster</p>
-                <p>← → - Lateral Thrusters</p>
-                <p>Space - Pause/Resume</p>
-            </div>
-            <div class="objectives">
-                <p><strong>Objective:</strong></p>
-                <p>Land safely on the landing pads!</p>
-                <p>Keep your velocity low and land flat.</p>
-            </div>
+        <div id="hud-center">
+            <div id="level-name-display">Level Name</div>
         </div>
         
-        <div id="gameOverlay" class="hidden">
-            <div id="gameMessage"></div>
-            <button id="restartBtn">Restart</button>
+        <div id="hud-right">
+            <div class="hud-item controls">
+                <span class="key">↑</span> Thrust
+                <span class="key">←</span><span class="key">→</span> Rotate
+                <span class="key">SPACE</span> Pause
+                <span class="key">ESC</span> Menu
+            </div>
         </div>
     </div>
     
-    <script src="terrain.js"></script>
-    <script src="game.js"></script>
+    <!-- Menu Overlay -->
+    <div id="menu-overlay" class="overlay">
+        <div class="menu-content">
+            <h1>Lunar Lander</h1>
+            <h2>Select Level</h2>
+            
+            <div id="level-list" class="level-list">
+                <!-- Levels populated by JS -->
+            </div>
+            
+            <div class="menu-actions">
+                <button id="import-level" class="btn">Import Level</button>
+                <input type="file" id="level-file-input" accept=".json" hidden>
+                <a href="editor/index.html" class="btn">Level Editor</a>
+            </div>
+            
+            <div class="instructions">
+                <h3>How to Play</h3>
+                <p>Navigate from <strong>START</strong> to <strong>GOAL</strong> platform</p>
+                <p>Use thrusters to control your descent and land safely</p>
+                <p>Watch your fuel and velocity!</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pause Overlay -->
+    <div id="pause-overlay" class="overlay hidden">
+        <div class="center-content">
+            <h2>PAUSED</h2>
+            <p>Press SPACE to resume</p>
+        </div>
+    </div>
+    
+    <script src="shared/level-format.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/terrain.js"></script>
+    <script src="js/ship.js"></script>
+    <script src="js/level-loader.js"></script>
+    <script src="js/game.js"></script>
 </body>
 </html>
