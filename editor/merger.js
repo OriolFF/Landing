@@ -47,6 +47,14 @@ class TerrainMerger {
      * Check if two segments should be merged
      */
     shouldMerge(seg1, seg2) {
+        // Check if fill directions match
+        const dir1 = seg1.fillDirection || 'down';
+        const dir2 = seg2.fillDirection || 'down';
+        
+        if (dir1 !== dir2) {
+            return false;
+        }
+
         // Check if segments overlap or touch
         if (this.levelFormat.checkSegmentsOverlap(seg1, seg2)) {
             return true;
@@ -132,6 +140,9 @@ class TerrainMerger {
         // Simplify merged points (remove duplicates and very close points)
         mergedPoints = this.simplifyPoints(mergedPoints);
         
+        // Preserve fill direction from first segment (they should be the same)
+        const fillDirection = seg1.fillDirection || 'down';
+        
         // Use color of first segment (or blend if you want)
         return {
             id: `segment_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -139,7 +150,7 @@ class TerrainMerger {
             color: seg1.color,
             points: mergedPoints,
             closed: false,
-            fillBelow: true
+            fillDirection: fillDirection
         };
     }
     

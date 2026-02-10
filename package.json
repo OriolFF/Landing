@@ -1,0 +1,13 @@
+{
+  "name": "lunar-lander-editor",
+  "version": "1.0.0",
+  "description": "Lunar Lander Level Editor with auto-export to game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "fs-extra": "^11.1.1"
+  }
+}

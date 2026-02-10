@@ -64,11 +64,11 @@ class Game {
         });
     }
     
-    showMenu() {
+    async showMenu() {
         this.paused = true;
         document.getElementById('menu-overlay').classList.remove('hidden');
         document.getElementById('hud').classList.add('hidden');
-        this.populateLevelList();
+        await this.populateLevelList();
     }
     
     hideMenu() {
@@ -77,59 +77,94 @@ class Game {
         this.paused = false;
     }
     
-    populateLevelList() {
+    async populateLevelList() {
         const list = document.getElementById('level-list');
-        list.innerHTML = '';
-        
-        const levels = this.levelLoader.getAvailableLevels();
-        
-        levels.forEach((level, index) => {
-            const item = document.createElement('div');
-            item.className = 'level-select-item';
-            item.innerHTML = `
-                <div class="level-info">
-                    <div class="level-name">${level.name}</div>
-                    <div class="level-desc">${level.description}</div>
-                </div>
-                ${level.isCustom ? '<button class="delete-level" data-key="' + level.storageKey + '">Delete</button>' : ''}
-            `;
-            
-            item.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('delete-level')) {
-                    this.loadLevel(level.data);
-                }
-            });
-            
-            const deleteBtn = item.querySelector('.delete-level');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (confirm('Delete this level?')) {
-                        this.levelLoader.deleteCustomLevel(level.storageKey);
-                        this.populateLevelList();
+        list.innerHTML = '<div class="loading-levels">Discovering levels...</div>';
+
+        try {
+            const levels = await this.levelLoader.getAvailableLevels();
+
+            list.innerHTML = '';
+
+            if (levels.length === 0) {
+                const isFileProtocol = window.location.protocol === 'file:';
+                list.innerHTML = `
+                    <div class="no-levels">
+                        <strong>No levels found.</strong><br><br>
+                        ${isFileProtocol ? `
+                            <strong style="color: #ff6b6b;">You opened this file directly!</strong><br><br>
+                            Browsers block level loading when opening HTML files directly.<br><br>
+                            <strong>To fix this, run a local server:</strong><br>
+                            <code>python3 -m http.server 8000</code><br>
+                            Then open: <code>http://localhost:8000</code><br><br>
+                            Or use: <code>npm start</code><br><br>
+                        ` : `
+                            Place level files in the <code>levels/</code> folder.<br>
+                            Supported names: level1.json, level2.json, etc.<br>
+                            Or any .json file in the levels directory.
+                        `}
+                    </div>
+                `;
+                return;
+            }
+
+            levels.forEach((level, index) => {
+                const item = document.createElement('div');
+                item.className = 'level-select-item';
+                item.innerHTML = `
+                    <div class="level-info">
+                        <div class="level-name">${level.name}</div>
+                        <div class="level-desc">${level.description}</div>
+                    </div>
+                    ${level.isCustom ? '<button class="delete-level" data-key="' + level.storageKey + '">Delete</button>' : ''}
+                `;
+                
+                item.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('delete-level')) {
+                        this.loadLevel(level.data);
                     }
                 });
-            }
-            
-            list.appendChild(item);
-        });
-        
-        // Import button
-        document.getElementById('import-level').onclick = () => {
-            document.getElementById('level-file-input').click();
-        };
-        
-        document.getElementById('level-file-input').onchange = async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                try {
-                    const level = await this.levelLoader.loadFromFile(file);
-                    this.loadLevel(level);
-                } catch (err) {
-                    alert('Failed to load level: ' + err.message);
+                
+                const deleteBtn = item.querySelector('.delete-level');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm('Delete this level?')) {
+                            this.levelLoader.deleteCustomLevel(level.storageKey);
+                            this.populateLevelList();
+                        }
+                    });
                 }
-            }
-        };
+                
+                list.appendChild(item);
+            });
+            
+            // Import button
+            document.getElementById('import-level').onclick = () => {
+                document.getElementById('level-file-input').click();
+            };
+            
+            document.getElementById('level-file-input').onchange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    try {
+                        const level = await this.levelLoader.loadFromFile(file);
+                        this.loadLevel(level);
+                    } catch (err) {
+                        alert('Failed to load level: ' + err.message);
+                    }
+                }
+            };
+        } catch (error) {
+            console.error('Error loading levels:', error);
+            list.innerHTML = `
+                <div class="no-levels">
+                    <strong>Error loading levels.</strong><br><br>
+                    ${error.message}<br><br>
+                    Check the browser console for details.
+                </div>
+            `;
+        }
     }
     
     loadLevel(levelData) {
@@ -156,10 +191,8 @@ class Game {
         // Set camera to follow ship
         this.camera.follow(this.ship);
         
-        // Center camera immediately on ship (don't wait for update)
-        this.camera.x = launch.x - this.canvas.width / 2;
-        this.camera.y = launch.y - 50 - this.canvas.height / 2;
-        this.camera.clampToBounds();
+        // Initialize camera with wide view of entire world, then zoom in
+        this.camera.initializeWideView();
         
         this.gameOver = false;
         this.won = false;
@@ -354,28 +387,30 @@ class Game {
     
     drawPlatform(platform, color, label) {
         const ctx = this.ctx;
+        const scale = this.camera.scale;
         const x = platform.x - platform.width / 2;
         const y = platform.y;
-        
+
         // Platform body
         ctx.fillStyle = color;
         ctx.fillRect(x, y, platform.width, 10);
-        
+
         // Border
         ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 / scale;
         ctx.strokeRect(x, y, platform.width, 10);
-        
-        // Label
+
+        // Label - scale font size to keep it readable
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 14px sans-serif';
+        ctx.font = `bold ${14 / scale}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.fillText(label, platform.x, y - 10);
-        
+
         // Landing zone indicator
         if (label === 'GOAL') {
             ctx.strokeStyle = color;
-            ctx.setLineDash([5, 5]);
+            ctx.setLineDash([5 / scale, 5 / scale]);
+            ctx.lineWidth = 2 / scale;
             ctx.strokeRect(x - 10, y - 30, platform.width + 20, 40);
             ctx.setLineDash([]);
         }

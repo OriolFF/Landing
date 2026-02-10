@@ -13,15 +13,20 @@ class Terrain {
      * Render terrain with viewport culling
      */
     render(ctx, camera) {
-        // Draw background
+        // Get viewport bounds in world coordinates
+        const bounds = camera.getBounds();
+        const viewportWidth = bounds.right - bounds.left;
+        const viewportHeight = bounds.bottom - bounds.top;
+
+        // Draw background to cover entire viewport
         ctx.fillStyle = this.backgroundColor;
-        ctx.fillRect(camera.x, camera.y, camera.canvas.width, camera.canvas.height);
-        
+        ctx.fillRect(bounds.left, bounds.top, viewportWidth, viewportHeight);
+
         // Draw world border
         ctx.strokeStyle = '#e94560';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 3 / camera.scale; // Keep border thickness constant on screen
         ctx.strokeRect(0, 0, this.worldWidth, this.worldHeight);
-        
+
         // Draw each segment
         this.segments.forEach(segment => {
             this.renderSegment(ctx, segment, camera);
@@ -81,19 +86,19 @@ class Terrain {
         // Draw terrain outline
         ctx.beginPath();
         ctx.moveTo(first.x, first.y);
-        
+
         for (let i = 1; i < segment.points.length; i++) {
             const p = segment.points[i];
             ctx.lineTo(p.x, p.y);
         }
-        
+
         ctx.strokeStyle = segment.color;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 3 / camera.scale; // Keep line thickness constant on screen
         ctx.stroke();
-        
+
         // Add glow effect
         ctx.shadowColor = segment.color;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 10 / camera.scale;
         ctx.stroke();
         ctx.shadowBlur = 0;
     }

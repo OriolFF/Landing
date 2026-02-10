@@ -4,206 +4,110 @@
 class LevelLoader {
     constructor() {
         this.levelFormat = new LevelFormat();
-        this.defaultLevels = this.createDefaultLevels();
     }
-    
-    /**
-     * Create some default levels
-     */
-    createDefaultLevels() {
-        return [
-            {
-                name: "Tutorial",
-                description: "Learn the basics",
-                data: this.createTutorialLevel()
-            },
-            {
-                name: "The Gap",
-                description: "Navigate the divide",
-                data: this.createGapLevel()
-            },
-            {
-                name: "Mountain Pass",
-                description: "Climb the heights",
-                data: this.createMountainLevel()
-            }
-        ];
-    }
-    
-    /**
-     * Create tutorial level
-     */
-    createTutorialLevel() {
-        return {
-            version: "2.0",
-            metadata: {
-                name: "Tutorial",
-                author: "System",
-                created: new Date().toISOString(),
-                gravity: 0.05,
-                fuelMultiplier: 1.0
-            },
-            world: {
-                width: 2000,
-                height: 1500,
-                backgroundColor: "#0a0a1a"
-            },
-            segments: [
-                {
-                    id: "ground",
-                    type: "terrain",
-                    color: "#8B4513",
-                    points: [
-                        {x: 0, y: 1200},
-                        {x: 500, y: 1200},
-                        {x: 1000, y: 1150},
-                        {x: 1500, y: 1200},
-                        {x: 2000, y: 1200}
-                    ],
-                    closed: false,
-                    fillBelow: true
-                }
-            ],
-            platforms: {
-                launch: { x: 200, y: 1200, width: 120 },
-                landing: { x: 1800, y: 1200, width: 120 }
-            },
-            camera: {
-                startX: 200,
-                startY: 1100
-            }
-        };
-    }
-    
-    /**
-     * Create gap level
-     */
-    createGapLevel() {
-        return {
-            version: "2.0",
-            metadata: {
-                name: "The Gap",
-                author: "System",
-                created: new Date().toISOString(),
-                gravity: 0.05,
-                fuelMultiplier: 1.0
-            },
-            world: {
-                width: 3000,
-                height: 2000,
-                backgroundColor: "#0a0a1a"
-            },
-            segments: [
-                {
-                    id: "left_platform",
-                    type: "terrain",
-                    color: "#8B4513",
-                    points: [
-                        {x: 0, y: 1500},
-                        {x: 800, y: 1500}
-                    ],
-                    closed: false,
-                    fillBelow: true
-                },
-                {
-                    id: "right_platform",
-                    type: "terrain",
-                    color: "#8B4513",
-                    points: [
-                        {x: 2200, y: 1500},
-                        {x: 3000, y: 1500}
-                    ],
-                    closed: false,
-                    fillBelow: true
-                },
-                {
-                    id: "middle_obstacle",
-                    type: "terrain",
-                    color: "#654321",
-                    points: [
-                        {x: 1000, y: 1800},
-                        {x: 1400, y: 1200},
-                        {x: 1800, y: 1800}
-                    ],
-                    closed: false,
-                    fillBelow: true
-                }
-            ],
-            platforms: {
-                launch: { x: 200, y: 1500, width: 120 },
-                landing: { x: 2800, y: 1500, width: 120 }
-            },
-            camera: {
-                startX: 200,
-                startY: 1400
-            }
-        };
-    }
-    
-    /**
-     * Create mountain level
-     */
-    createMountainLevel() {
-        const points = [];
-        for (let x = 0; x <= 4000; x += 100) {
-            const y = 1500 + Math.sin(x * 0.01) * 200 + Math.sin(x * 0.003) * 300;
-            points.push({x, y});
-        }
-        
-        return {
-            version: "2.0",
-            metadata: {
-                name: "Mountain Pass",
-                author: "System",
-                created: new Date().toISOString(),
-                gravity: 0.05,
-                fuelMultiplier: 1.0
-            },
-            world: {
-                width: 4000,
-                height: 2500,
-                backgroundColor: "#0a0a1a"
-            },
-            segments: [
-                {
-                    id: "mountains",
-                    type: "terrain",
-                    color: "#4a4a4a",
-                    points: points,
-                    closed: false,
-                    fillBelow: true
-                }
-            ],
-            platforms: {
-                launch: { x: 200, y: 1500, width: 120 },
-                landing: { x: 3800, y: 1300, width: 120 }
-            },
-            camera: {
-                startX: 200,
-                startY: 1400
-            }
-        };
-    }
-    
+
     /**
      * Get list of available levels
+     * Works on static sites (GitHub Pages) by trying to load level files directly
      */
-    getAvailableLevels() {
-        const levels = [...this.defaultLevels];
-        
+    async getAvailableLevels() {
+        const levels = [];
+
+        // Load levels from levels/ directory (works on static sites)
+        try {
+            const fileLevels = await this.loadLevelsFromDirectory();
+            levels.push(...fileLevels);
+        } catch (e) {
+            console.log('Could not load levels from directory:', e.message);
+        }
+
         // Load custom levels from localStorage
         const customLevels = this.loadCustomLevels();
         levels.push(...customLevels);
-        
+
         return levels;
     }
-    
+
+    /**
+     * Load levels from levels/ directory dynamically
+     * Works on static sites by trying to load files in parallel
+     */
+    async loadLevelsFromDirectory() {
+        const levels = [];
+        const potentialFiles = [];
+        
+        // Check if running from file:// protocol (direct file open)
+        if (window.location.protocol === 'file:') {
+            console.error('ERROR: Cannot load levels when opening file directly.');
+            console.error('Please use a local server instead:');
+            console.error('  python3 -m http.server 8000');
+            console.error('  OR npm start');
+            console.error('Then open: http://localhost:8000');
+            throw new Error('Cannot load levels from file:// protocol. Please use a local server.');
+        }
+        
+        // Add numbered levels (level1.json through level20.json)
+        for (let i = 1; i <= 20; i++) {
+            potentialFiles.push(`level${i}.json`);
+        }
+        
+        // Add descriptive names
+        const descriptiveNames = [
+            'tutorial', 'easy', 'medium', 'hard', 'expert', 
+            'beginner', 'advanced', 'master',
+            'dificil1', 'levelstlar'  // Your existing custom levels
+        ];
+        descriptiveNames.forEach(name => {
+            if (!potentialFiles.includes(`${name}.json`)) {
+                potentialFiles.push(`${name}.json`);
+            }
+        });
+        
+        // Try to load all files in parallel
+        const loadPromises = potentialFiles.map(async (filename) => {
+            try {
+                const response = await fetch(`levels/${filename}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const validation = this.validate(data);
+                    if (validation.valid) {
+                        console.log(`Loaded level: ${filename}`);
+                        return {
+                            name: data.metadata?.name || filename.replace('.json', ''),
+                            description: `By: ${data.metadata?.author || 'Unknown'}`,
+                            data: data,
+                            isFile: true,
+                            filename: filename
+                        };
+                    } else {
+                        console.warn(`Invalid level file ${filename}:`, validation.errors);
+                    }
+                }
+            } catch (e) {
+                // File doesn't exist or fetch failed - only log in debug mode
+                if (window.location.search.includes('debug')) {
+                    console.debug(`Failed to load ${filename}:`, e.message);
+                }
+            }
+            return null;
+        });
+        
+        // Wait for all attempts and collect successful loads
+        const results = await Promise.all(loadPromises);
+        results.forEach(level => {
+            if (level) levels.push(level);
+        });
+        
+        console.log(`Discovered ${levels.length} level(s)`);
+        return levels;
+    }
+
     /**
      * Load custom levels from localStorage
      */
     loadCustomLevels() {
         const levels = [];
-        
+
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('lunarLevel_')) {
@@ -221,10 +125,10 @@ class LevelLoader {
                 }
             }
         }
-        
+
         return levels;
     }
-    
+
     /**
      * Save custom level to localStorage
      */
@@ -235,14 +139,14 @@ class LevelLoader {
         localStorage.setItem(key, JSON.stringify(levelData));
         return key;
     }
-    
+
     /**
      * Delete custom level
      */
     deleteCustomLevel(storageKey) {
         localStorage.removeItem(storageKey);
     }
-    
+
     /**
      * Load level from file
      */
@@ -261,7 +165,7 @@ class LevelLoader {
             reader.readAsText(file);
         });
     }
-    
+
     /**
      * Validate level data
      */
