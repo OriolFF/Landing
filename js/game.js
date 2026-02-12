@@ -17,7 +17,8 @@ class Game {
         this.gameOver = false;
         this.won = false;
         this.lastTime = 0;
-        
+        this.elapsedTime = 0;
+
         this.init();
     }
     
@@ -196,6 +197,7 @@ class Game {
         
         this.gameOver = false;
         this.won = false;
+        this.elapsedTime = 0;
         this.lastTime = performance.now();
         this.hideMenu();
         requestAnimationFrame((time) => this.loop(time));
@@ -220,6 +222,8 @@ class Game {
             this.lastTime = performance.now();
             return;
         }
+
+        this.elapsedTime += deltaTime;
         
         // Update ship input
         const thrust = this.keys['ArrowUp'] || this.keys['KeyW'];
@@ -228,14 +232,17 @@ class Game {
         
         this.ship.setInput(thrust, left, right);
         
+        // Capture ship geometry before physics step for swept collision checks
+        const previousVertices = this.ship.getVertices();
+        
         // Update ship with deltaTime (original used gravity = 30)
         this.ship.update(deltaTime, 30);
         
-        // Check terrain collision
-        this.checkCollisions();
+        // Check terrain and platform collisions (use previous frame geometry)
+        this.checkCollisions(previousVertices);
         
         // Update camera
-        this.camera.update();
+        this.camera.update(deltaTime);
         
         // Check win/lose conditions
         if (this.ship.crashed) {
@@ -250,12 +257,15 @@ class Game {
         this.updateHUD();
     }
     
-    checkCollisions() {
+    checkCollisions(previousVertices = null) {
         const ship = this.ship;
         const platforms = this.currentLevel.platforms;
         
         // Get ship vertices for collision
         const vertices = ship.getVertices();
+        const prevVerts = previousVertices || vertices;
+        const currentBounds = this.getPolygonBounds(vertices);
+        const previousBounds = this.getPolygonBounds(prevVerts);
         
         // Check terrain collision
         for (let vertex of vertices) {
@@ -281,12 +291,29 @@ class Game {
         // Check landing platform
         if (platforms.landing) {
             const landing = platforms.landing;
+            const landingLeft = landing.x - landing.width / 2;
+            const landingRight = landing.x + landing.width / 2;
+            const landingTop = landing.y - 10;
+            const landingBottom = landing.y + 10;
+            
+            const boundsOverlap =
+                currentBounds.maxX >= landingLeft &&
+                currentBounds.minX <= landingRight &&
+                currentBounds.maxY >= landingTop &&
+                currentBounds.minY <= landingBottom;
+            
+            const crossedBetweenFrames =
+                previousBounds.maxY <= landingTop &&
+                currentBounds.maxY >= landingTop &&
+                currentBounds.maxX >= landingLeft &&
+                currentBounds.minX <= landingRight;
+            
             const onPlatform = vertices.some(v => 
-                v.x >= landing.x - landing.width/2 && 
-                v.x <= landing.x + landing.width/2 &&
-                v.y >= landing.y - 10 && 
-                v.y <= landing.y + 10
-            );
+                v.x >= landingLeft && 
+                v.x <= landingRight &&
+                v.y >= landingTop && 
+                v.y <= landingBottom
+            ) || boundsOverlap || crossedBetweenFrames;
             
             if (onPlatform) {
                 const speed = ship.getSpeed();
@@ -335,8 +362,29 @@ class Game {
         }
     }
     
+    getPolygonBounds(vertices) {
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        
+        vertices.forEach(({ x, y }) => {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        });
+        
+        return { minX, maxX, minY, maxY };
+    }
+    
     updateHUD() {
         if (!this.ship) return;
+        
+        const timerEl = document.getElementById('elapsed-time');
+        if (timerEl) {
+            timerEl.textContent = this.formatTime(this.elapsedTime);
+        }
         
         document.getElementById('fuel').textContent = Math.round(this.ship.getFuelPercent()) + '%';
         document.getElementById('velocity').textContent = this.ship.getSpeed().toFixed(1);
@@ -420,14 +468,27 @@ class Game {
         // Game over screen
         if (this.gameOver) {
             this.drawCenteredText('CRASHED!', '#e94560', 48);
-            this.drawCenteredText('Press SPACE to retry', '#fff', 20, 60);
+            this.drawCenteredText(`Mission Time: ${this.formatTime(this.elapsedTime)}`, '#facc15', 26, 60);
+            this.drawCenteredText('Press SPACE to retry', '#fff', 20, 110);
         }
         
         // Win screen
         if (this.won) {
             this.drawCenteredText('SUCCESSFUL LANDING!', '#4ade80', 48);
-            this.drawCenteredText('Press SPACE to continue', '#fff', 20, 60);
+            this.drawCenteredText(`Mission Time: ${this.formatTime(this.elapsedTime)}`, '#facc15', 26, 60);
+            this.drawCenteredText('Press SPACE to continue', '#fff', 20, 110);
         }
+    }
+    
+    formatTime(milliseconds) {
+        const totalMs = Math.max(0, Math.floor(milliseconds));
+        const totalSeconds = Math.floor(totalMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const tenths = Math.floor((totalMs % 1000) / 100);
+        const minuteStr = minutes.toString().padStart(2, '0');
+        const secondStr = seconds.toString().padStart(2, '0');
+        return `${minuteStr}:${secondStr}.${tenths}`;
     }
     
     drawCenteredText(text, color, size, offsetY = 0) {

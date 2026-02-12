@@ -18,10 +18,10 @@ class Camera {
         this.targetScale = 1;
         this.minScale = 0.3; // Zoomed out to see full world
         this.maxScale = 0.8; // Not too close to the ship
-        this.scaleSmoothing = 0.02;
+        this.scaleSmoothing = 0.015;
 
         // Smoothing factor (0 = no follow, 1 = instant)
-        this.smoothing = 0.1;
+        this.smoothing = 0.06;
 
         // Target to follow
         this.target = null;
@@ -31,6 +31,14 @@ class Camera {
 
         // Initial zoom state
         this.hasInitialZoomed = false;
+
+        // Intro sweep to showcase the level
+        this.introDuration = 4000; // ms
+        this.introElapsed = 0;
+        this.introActive = false;
+        this.introStartX = 0;
+        this.introStartY = 0;
+        this.introStartScale = 1;
     }
     
     /**
@@ -63,35 +71,60 @@ class Camera {
         this.x = (this.worldWidth - this.canvas.width / this.scale) / 2;
         this.y = (this.worldHeight - this.canvas.height / this.scale) / 2;
 
+        this.introStartX = this.x;
+        this.introStartY = this.y;
+        this.introStartScale = this.scale;
+        this.introElapsed = 0;
+        this.introActive = true;
         this.hasInitialZoomed = false;
     }
     
     /**
      * Update camera position with lag
      */
-    update() {
+    update(deltaTime = 16.67) {
         if (!this.target) return;
 
-        // Gradually zoom in from wide view to target scale
-        if (!this.hasInitialZoomed) {
+        if (this.introActive) {
+            this.introElapsed += deltaTime;
+            const t = Math.min(1, this.introElapsed / this.introDuration);
+            const eased = 1 - Math.pow(1 - t, 3);
+
+            // Smooth zoom from full world to gameplay scale
+            const desiredScale = this.introStartScale + (this.targetScale - this.introStartScale) * eased;
+            this.scale += (desiredScale - this.scale) * 0.2;
+
+            // Determine target position at current scale
+            const viewportWidth = this.canvas.width / this.scale;
+            const viewportHeight = this.canvas.height / this.scale;
+            const targetX = this.target.x - viewportWidth / 2;
+            const targetY = this.target.y - viewportHeight / 2;
+
+            this.x = this.introStartX + (targetX - this.introStartX) * eased;
+            this.y = this.introStartY + (targetY - this.introStartY) * eased;
+
+            if (t >= 1) {
+                this.introActive = false;
+                this.hasInitialZoomed = true;
+                this.scale = this.targetScale;
+            }
+        } else {
+            // Gradually adjust scale if needed
             const scaleDiff = this.targetScale - this.scale;
             if (Math.abs(scaleDiff) > 0.001) {
                 this.scale += scaleDiff * this.scaleSmoothing;
-            } else {
-                this.scale = this.targetScale;
-                this.hasInitialZoomed = true;
             }
+
+            // Calculate desired position (center target, accounting for scale)
+            const viewportWidth = this.canvas.width / this.scale;
+            const viewportHeight = this.canvas.height / this.scale;
+            const targetX = this.target.x - viewportWidth / 2;
+            const targetY = this.target.y - viewportHeight / 2;
+
+            // Smooth interpolation
+            this.x += (targetX - this.x) * this.smoothing;
+            this.y += (targetY - this.y) * this.smoothing;
         }
-
-        // Calculate desired position (center target, accounting for scale)
-        const viewportWidth = this.canvas.width / this.scale;
-        const viewportHeight = this.canvas.height / this.scale;
-        const targetX = this.target.x - viewportWidth / 2;
-        const targetY = this.target.y - viewportHeight / 2;
-
-        // Smooth interpolation
-        this.x += (targetX - this.x) * this.smoothing;
-        this.y += (targetY - this.y) * this.smoothing;
 
         // Clamp to world bounds
         this.clampToBounds();

@@ -11,13 +11,17 @@
     <canvas id="game-canvas"></canvas>
     
     <!-- HUD -->
-    <div id="hud" class="hidden">
-        <div id="hud-left">
-            <div class="hud-item">
-                <span class="label">Fuel:</span>
-                <div class="bar-container">
-                    <div id="fuel-bar" class="bar"></div>
+        <div id="hud" class="hidden">
+            <div id="hud-left">
+                <div class="hud-item timer">
+                    <span class="label">Time:</span>
+                    <span id="elapsed-time">00:00.0</span>
                 </div>
+                <div class="hud-item">
+                    <span class="label">Fuel:</span>
+                    <div class="bar-container">
+                        <div id="fuel-bar" class="bar"></div>
+                    </div>
                 <span id="fuel">100%</span>
             </div>
             <div class="hud-item">

@@ -60,6 +60,18 @@ body {
     font-size: 14px;
 }
 
+.hud-item.timer {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f4f4f5;
+    letter-spacing: 0.5px;
+}
+
+.hud-item.timer .label {
+    color: #facc15;
+    text-transform: uppercase;
+}
+
 .hud-item .label {
     color: #888;
     min-width: 60px;
